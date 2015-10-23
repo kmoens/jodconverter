@@ -14,8 +14,8 @@ package org.artofsolving.jodconverter.util;
 
 public class PlatformUtils {
 
-    private static final String OS_NAME = System.getProperty("os.name").toLowerCase();
-    
+    private static String OS_NAME = System.getProperty("os.name").toLowerCase();
+
     private PlatformUtils() {
         throw new AssertionError("utility class must not be instantiated");
     }
@@ -32,4 +32,7 @@ public class PlatformUtils {
         return OS_NAME.startsWith("windows");
     }
 
+    public static void set(final String osName) {
+        OS_NAME = osName;
+    }
 }

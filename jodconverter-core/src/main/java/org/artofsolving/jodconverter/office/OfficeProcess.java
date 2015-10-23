@@ -14,6 +14,7 @@ package org.artofsolving.jodconverter.office;
 
 import static org.artofsolving.jodconverter.process.ProcessManager.PID_NOT_FOUND;
 import static org.artofsolving.jodconverter.process.ProcessManager.PID_UNKNOWN;
+
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -28,12 +29,14 @@ import org.artofsolving.jodconverter.process.ProcessQuery;
 import org.artofsolving.jodconverter.util.PlatformUtils;
 
 class OfficeProcess {
+    private static final int MAX_LENGTH = 159;
 
     private final File officeHome;
     private final UnoUrl unoUrl;
     private final String[] runAsArgs;
     private final File templateProfileDir;
     private final File instanceProfileDir;
+    private final String instanceProfileUrl;
     private final ProcessManager processManager;
 
     private Process process;
@@ -41,20 +44,26 @@ class OfficeProcess {
 
     private final Logger logger = Logger.getLogger(getClass().getName());
 
-    public OfficeProcess(File officeHome, UnoUrl unoUrl, String[] runAsArgs, File templateProfileDir, File workDir, ProcessManager processManager) {
+    public OfficeProcess(final File officeHome, final UnoUrl unoUrl, final String[] runAsArgs, final File templateProfileDir, final File instanceProfileDir, final ProcessManager processManager) {
         this.officeHome = officeHome;
         this.unoUrl = unoUrl;
         this.runAsArgs = runAsArgs;
         this.templateProfileDir = templateProfileDir;
-        this.instanceProfileDir = getInstanceProfileDir(workDir, unoUrl);
+        this.instanceProfileDir = instanceProfileDir;
         this.processManager = processManager;
+
+        instanceProfileUrl = OfficeUtils.toUrl(instanceProfileDir);
+        if (PlatformUtils.isWindows() && instanceProfileUrl.length() >= MAX_LENGTH) {
+            logger.severe("The instance profile directory (" + instanceProfileUrl + ") is too long (>= " + MAX_LENGTH + " characters).");
+            throw new IllegalStateException("The instance profile directory (" + instanceProfileUrl + ") is too long (>= " + MAX_LENGTH + " characters).");
+        }
     }
 
     public void start() throws IOException {
         start(false);
     }
 
-    public void start(boolean restart) throws IOException {
+    public void start(final boolean restart) throws IOException {
         ProcessQuery processQuery = new ProcessQuery("soffice.bin", unoUrl.getAcceptString());
         long existingPid = processManager.findPid(processQuery);
     	if (!(existingPid == PID_NOT_FOUND || existingPid == PID_UNKNOWN)) {
@@ -71,7 +80,7 @@ class OfficeProcess {
         }
         command.add(executable.getAbsolutePath());
         command.add("-accept=" + unoUrl.getAcceptString() + ";urp;");
-        command.add("-env:UserInstallation=" + OfficeUtils.toUrl(instanceProfileDir));
+        command.add("-env:UserInstallation=" + instanceProfileUrl);
         command.add("-headless");
         command.add("-nocrashreport");
         command.add("-nodefault");
@@ -91,11 +100,6 @@ class OfficeProcess {
                     unoUrl.getAcceptString()));
         }
         logger.info("started process" + (pid != PID_UNKNOWN ? "; pid = " + pid : ""));
-    }
-
-    private File getInstanceProfileDir(File workDir, UnoUrl unoUrl) {
-        String dirName = ".jodconverter_" + unoUrl.getAcceptString().replace(',', '_').replace('=', '-');
-        return new File(workDir, dirName);
     }
 
     private void prepareInstanceProfileDir() throws OfficeException {
@@ -127,7 +131,7 @@ class OfficeProcess {
         }
     }
 
-    private void addBasisAndUrePaths(ProcessBuilder processBuilder) throws IOException {
+    private void addBasisAndUrePaths(final ProcessBuilder processBuilder) throws IOException {
         // see http://wiki.services.openoffice.org/wiki/ODF_Toolkit/Efforts/Three-Layer_OOo
         File basisLink = new File(officeHome, "basis-link");
         if (!basisLink.isFile()) {
@@ -163,9 +167,10 @@ class OfficeProcess {
     }
 
     private class ExitCodeRetryable extends Retryable {
-        
+
         private int exitCode;
-        
+
+        @Override
         protected void attempt() throws TemporaryException, Exception {
             try {
                 exitCode = process.exitValue();
@@ -173,7 +178,7 @@ class OfficeProcess {
                 throw new TemporaryException(illegalThreadStateException);
             }
         }
-        
+
         public int getExitCode() {
             return exitCode;
         }
@@ -188,7 +193,7 @@ class OfficeProcess {
         }
     }
 
-    public int getExitCode(long retryInterval, long retryTimeout) throws RetryTimeoutException {
+    public int getExitCode(final long retryInterval, final long retryTimeout) throws RetryTimeoutException {
         try {
             ExitCodeRetryable retryable = new ExitCodeRetryable();
             retryable.execute(retryInterval, retryTimeout);
@@ -200,7 +205,7 @@ class OfficeProcess {
         }
     }
 
-    public int forciblyTerminate(long retryInterval, long retryTimeout) throws IOException, RetryTimeoutException {
+    public int forciblyTerminate(final long retryInterval, final long retryTimeout) throws IOException, RetryTimeoutException {
         logger.info(String.format("trying to forcibly terminate process: '" + unoUrl + "'" + (pid != PID_UNKNOWN ? " (pid " + pid  + ")" : "")));
         processManager.kill(process, pid);
         return getExitCode(retryInterval, retryTimeout);
