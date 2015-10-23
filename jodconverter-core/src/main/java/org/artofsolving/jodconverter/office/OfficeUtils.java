@@ -28,11 +28,11 @@ public class OfficeUtils {
         throw new AssertionError("utility class must not be instantiated");
     }
 
-    public static <T> T cast(Class<T> type, Object object) {
-        return (T) UnoRuntime.queryInterface(type, object);
+    public static <T> T cast(final Class<T> type, final Object object) {
+        return UnoRuntime.queryInterface(type, object);
     }
 
-    public static PropertyValue property(String name, Object value) {
+    public static PropertyValue property(final String name, final Object value) {
         PropertyValue propertyValue = new PropertyValue();
         propertyValue.Name = name;
         propertyValue.Value = value;
@@ -40,7 +40,7 @@ public class OfficeUtils {
     }
 
     @SuppressWarnings("unchecked")
-    public static PropertyValue[] toUnoProperties(Map<String,?> properties) {
+    public static PropertyValue[] toUnoProperties(final Map<String,?> properties) {
         PropertyValue[] propertyValues = new PropertyValue[properties.size()];
         int i = 0;
         for (Map.Entry<String,?> entry : properties.entrySet()) {
@@ -49,12 +49,12 @@ public class OfficeUtils {
                 Map<String,Object> subProperties = (Map<String,Object>) value;
                 value = toUnoProperties(subProperties);
             }
-            propertyValues[i++] = property((String) entry.getKey(), value);
+            propertyValues[i++] = property(entry.getKey(), value);
         }
         return propertyValues;
     }
 
-    public static String toUrl(File file) {
+    public static String toUrl(final File file) {
         String path = file.toURI().getRawPath();
         String url = path.startsWith("//") ? "file:" + path : "file://" + path;
         return url.endsWith("/") ? url.substring(0, url.length() - 1) : url;
@@ -71,6 +71,7 @@ public class OfficeUtils {
                 programFiles = System.getenv("ProgramFiles");
             }
             return findOfficeHome(
+                programFiles + File.separator + "OpenOffice 4",
                 programFiles + File.separator + "OpenOffice.org 3",
                 programFiles + File.separator + "LibreOffice 3"
             );
@@ -90,7 +91,7 @@ public class OfficeUtils {
         }
     }
 
-    private static File findOfficeHome(String... knownPaths) {
+    private static File findOfficeHome(final String... knownPaths) {
         for (String path : knownPaths) {
             File home = new File(path);
             if (getOfficeExecutable(home).isFile()) {
@@ -100,7 +101,7 @@ public class OfficeUtils {
         return null;
     }
 
-    public static File getOfficeExecutable(File officeHome) {
+    public static File getOfficeExecutable(final File officeHome) {
         if (PlatformUtils.isMac()) {
             return new File(officeHome, "MacOS/soffice.bin");
         } else {
