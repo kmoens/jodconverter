@@ -31,30 +31,13 @@ public class ProcessManagerTest {
         ProcessManager processManager = new LinuxProcessManager();
         Process process = new ProcessBuilder("sleep", "5s").start();
         ProcessQuery query = new ProcessQuery("sleep", "5s");
-        
+
         long pid = processManager.findPid(query);
         assertFalse(pid == ProcessManager.PID_NOT_FOUND);
         Integer javaPid = (Integer) ReflectionUtils.getPrivateField(process, "pid");
         assertEquals(pid, javaPid.longValue());
-        
-        processManager.kill(process, pid);
-        assertEquals(processManager.findPid(query), ProcessManager.PID_NOT_FOUND);
-    }
-
-    public void sigarProcessManager() throws Exception {
-        ProcessManager processManager = new SigarProcessManager();
-        Process process = new ProcessBuilder("sleep", "5s").start();
-        ProcessQuery query = new ProcessQuery("sleep", "5s");
-        
-        long pid = processManager.findPid(query);
-        assertFalse(pid == ProcessManager.PID_NOT_FOUND);
-        if (PlatformUtils.isLinux()) {
-            Integer javaPid = (Integer) ReflectionUtils.getPrivateField(process, "pid");
-            assertEquals(pid, javaPid.longValue());
-        }
 
         processManager.kill(process, pid);
         assertEquals(processManager.findPid(query), ProcessManager.PID_NOT_FOUND);
     }
-
 }
