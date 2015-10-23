@@ -21,37 +21,29 @@ import static org.testng.Assert.fail;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.TimeoutException;
 
-
 import org.artofsolving.jodconverter.ReflectionUtils;
-import org.artofsolving.jodconverter.office.ManagedOfficeProcess;
-import org.artofsolving.jodconverter.office.PooledOfficeManager;
-import org.artofsolving.jodconverter.office.PooledOfficeManagerSettings;
-import org.artofsolving.jodconverter.office.OfficeConnection;
-import org.artofsolving.jodconverter.office.UnoUrl;
-import org.artofsolving.jodconverter.office.OfficeException;
-import org.artofsolving.jodconverter.office.OfficeProcess;
 import org.testng.annotations.Test;
 
 @Test(groups="integration")
 public class PooledOfficeManagerTest {
 
     private static final UnoUrl CONNECTION_MODE = UnoUrl.socket(2002);
-    private static final long RESTART_WAIT_TIME = 2 * 1000;
+    private static final long RESTART_WAIT_TIME = 4 * 1000;
 
     public void executeTask() throws Exception {
         PooledOfficeManager officeManager = new PooledOfficeManager(CONNECTION_MODE);
         ManagedOfficeProcess managedOfficeProcess = (ManagedOfficeProcess) ReflectionUtils.getPrivateField(officeManager, "managedOfficeProcess");
         OfficeProcess process = (OfficeProcess) ReflectionUtils.getPrivateField(managedOfficeProcess, "process");
         OfficeConnection connection = (OfficeConnection) ReflectionUtils.getPrivateField(managedOfficeProcess, "connection");
-        
+
         officeManager.start();
         assertTrue(process.isRunning());
         assertTrue(connection.isConnected());
-        
+
         MockOfficeTask task = new MockOfficeTask();
         officeManager.execute(task);
         assertTrue(task.isCompleted());
-        
+
         officeManager.stop();
         assertFalse(connection.isConnected());
         assertFalse(process.isRunning());
@@ -64,12 +56,13 @@ public class PooledOfficeManagerTest {
         OfficeProcess process = (OfficeProcess) ReflectionUtils.getPrivateField(managedOfficeProcess, "process");
         OfficeConnection connection = (OfficeConnection) ReflectionUtils.getPrivateField(managedOfficeProcess, "connection");
         assertNotNull(connection);
-        
+
         officeManager.start();
         assertTrue(process.isRunning());
         assertTrue(connection.isConnected());
-        
+
         new Thread() {
+            @Override
             public void run() {
                 MockOfficeTask badTask = new MockOfficeTask(10 * 1000);
                 try {
@@ -104,16 +97,16 @@ public class PooledOfficeManagerTest {
         PooledOfficeManagerSettings configuration = new PooledOfficeManagerSettings(CONNECTION_MODE);
         configuration.setTaskExecutionTimeout(1500L);
         final PooledOfficeManager officeManager = new PooledOfficeManager(configuration);
-        
+
         ManagedOfficeProcess managedOfficeProcess = (ManagedOfficeProcess) ReflectionUtils.getPrivateField(officeManager, "managedOfficeProcess");
         OfficeProcess process = (OfficeProcess) ReflectionUtils.getPrivateField(managedOfficeProcess, "process");
         OfficeConnection connection = (OfficeConnection) ReflectionUtils.getPrivateField(managedOfficeProcess, "connection");
         assertNotNull(connection);
-        
+
         officeManager.start();
         assertTrue(process.isRunning());
         assertTrue(connection.isConnected());
-        
+
         MockOfficeTask longTask = new MockOfficeTask(2000);
         try {
             officeManager.execute(longTask);
@@ -140,16 +133,16 @@ public class PooledOfficeManagerTest {
         PooledOfficeManagerSettings configuration = new PooledOfficeManagerSettings(CONNECTION_MODE);
         configuration.setMaxTasksPerProcess(3);
         final PooledOfficeManager officeManager = new PooledOfficeManager(configuration);
-        
+
         ManagedOfficeProcess managedOfficeProcess = (ManagedOfficeProcess) ReflectionUtils.getPrivateField(officeManager, "managedOfficeProcess");
         OfficeProcess process = (OfficeProcess) ReflectionUtils.getPrivateField(managedOfficeProcess, "process");
         OfficeConnection connection = (OfficeConnection) ReflectionUtils.getPrivateField(managedOfficeProcess, "connection");
         assertNotNull(connection);
-        
+
         officeManager.start();
         assertTrue(process.isRunning());
         assertTrue(connection.isConnected());
-        
+
         for (int i = 0; i < 3; i++) {
             MockOfficeTask task = new MockOfficeTask();
             officeManager.execute(task);
