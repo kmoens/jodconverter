@@ -1,3 +1,15 @@
+JODConverter for CIPAL
+======================
+A fork of the JODConverter library which specific modifications for Cipal 
+IT Solutions nv.
+
+The following patches are applied:
+* A check on the path length of the instance profile directory on Windows. 
+If it exceeds 159 characters, OpenOffice fails to start properly.
+* Remove of the subdirectory for the instance profile directory. We make our 
+work directory unique outside of the library.
+* Remove of the Sigar library, it is unstable in production use.
+
 JODConverter
 ============
 
