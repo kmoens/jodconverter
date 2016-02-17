@@ -54,7 +54,6 @@ public class DefaultDocumentFormatRegistry extends SimpleDocumentFormatRegistry 
 
 		DocumentFormat sxw = new DocumentFormat("OpenOffice.org 1.0 Text Document", "sxw", "application/vnd.sun.xml.writer");
 		sxw.setInputFamily(DocumentFamily.TEXT);
-		sxw.setStoreProperties(DocumentFamily.TEXT, Collections.singletonMap("FilterName", "StarOffice XML (Writer)"));
 		addFormat(sxw);
 
 		DocumentFormat doc = new DocumentFormat("Microsoft Word", "doc", "application/msword");
@@ -64,6 +63,7 @@ public class DefaultDocumentFormatRegistry extends SimpleDocumentFormatRegistry 
 
 		DocumentFormat docx = new DocumentFormat("Microsoft Word 2007 XML", "docx", "application/vnd.openxmlformats-officedocument.wordprocessingml.document");
 		docx.setInputFamily(DocumentFamily.TEXT);
+        docx.setStoreProperties(DocumentFamily.TEXT, Collections.singletonMap("FilterName", "MS Word 2007 XML"));
         addFormat(docx);
 
 		DocumentFormat rtf = new DocumentFormat("Rich Text Format", "rtf", "text/rtf");
@@ -95,7 +95,6 @@ public class DefaultDocumentFormatRegistry extends SimpleDocumentFormatRegistry 
 
 		DocumentFormat sxc = new DocumentFormat("OpenOffice.org 1.0 Spreadsheet", "sxc", "application/vnd.sun.xml.calc");
 		sxc.setInputFamily(DocumentFamily.SPREADSHEET);
-		sxc.setStoreProperties(DocumentFamily.SPREADSHEET, Collections.singletonMap("FilterName", "StarOffice XML (Calc)"));
 		addFormat(sxc);
 
 		DocumentFormat xls = new DocumentFormat("Microsoft Excel", "xls", "application/vnd.ms-excel");
@@ -132,7 +131,6 @@ public class DefaultDocumentFormatRegistry extends SimpleDocumentFormatRegistry 
 
 		DocumentFormat sxi = new DocumentFormat("OpenOffice.org 1.0 Presentation", "sxi", "application/vnd.sun.xml.impress");
 		sxi.setInputFamily(DocumentFamily.PRESENTATION);
-		sxi.setStoreProperties(DocumentFamily.PRESENTATION, Collections.singletonMap("FilterName", "StarOffice XML (Impress)"));
 		addFormat(sxi);
 
 		DocumentFormat ppt = new DocumentFormat("Microsoft PowerPoint", "ppt", "application/vnd.ms-powerpoint");
