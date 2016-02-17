@@ -144,7 +144,7 @@ class OfficeProcess {
         }
         command.add(executable.getAbsolutePath());
         command.add(commandArgPrefix + "accept=" + unoUrl.getAcceptString() + ";urp;");
-        command.add(commandArgPrefix + "env:UserInstallation=" + instanceProfileUrl);
+        command.add("-env:UserInstallation=" + instanceProfileUrl); // this one will not use the GNU-style options!
         command.add(commandArgPrefix + "headless");
         command.add(commandArgPrefix + "nocrashreport");
         command.add(commandArgPrefix + "nodefault");
