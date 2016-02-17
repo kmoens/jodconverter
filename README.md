@@ -1,5 +1,5 @@
-JODConverter for CIPAL
-======================
+JODConverter for Cipal IT Solutions nv
+======================================
 A fork of the JODConverter library which specific modifications for Cipal 
 IT Solutions nv.
 
