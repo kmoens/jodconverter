@@ -49,6 +49,11 @@ public class OfficeDocumentConverterFunctionalTest {
                 assertNotNull(inputFormat, "unknown input format: " + inputExtension);
                 Set<DocumentFormat> outputFormats = formatRegistry.getOutputFormats(inputFormat.getInputFamily());
                 for (DocumentFormat outputFormat : outputFormats) {
+                    // LibreOffice 4 fails natively on this one
+                    if (inputFormat.getExtension().equals("odg") && outputFormat.getExtension().equals("svg")) {
+                        System.out.println("-- skipping odg to svg test... ");
+                        continue;
+                    }
                     File outputFile = File.createTempFile("test", "." + outputFormat.getExtension());
                     outputFile.deleteOnExit();
                     System.out.printf("-- converting %s to %s... ", inputFormat.getExtension(), outputFormat.getExtension());

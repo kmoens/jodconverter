@@ -18,7 +18,6 @@ import org.artofsolving.jodconverter.process.ProcessManager;
 import org.artofsolving.jodconverter.process.PureJavaProcessManager;
 
 class ManagedOfficeProcessSettings {
-
     public static final long DEFAULT_RETRY_INTERVAL = 250L;
 
     private final UnoUrl unoUrl;
@@ -29,8 +28,9 @@ class ManagedOfficeProcessSettings {
     private ProcessManager processManager = new PureJavaProcessManager();
     private long retryTimeout = DefaultOfficeManagerConfiguration.DEFAULT_RETRY_TIMEOUT;
     private long retryInterval = DEFAULT_RETRY_INTERVAL;
+    private boolean useGnuStyleLongOptions = false;
 
-    public ManagedOfficeProcessSettings(UnoUrl unoUrl) {
+    public ManagedOfficeProcessSettings(final UnoUrl unoUrl) {
         this.unoUrl = unoUrl;
     }
 
@@ -42,7 +42,7 @@ class ManagedOfficeProcessSettings {
         return officeHome;
     }
 
-    public void setOfficeHome(File officeHome) {
+    public void setOfficeHome(final File officeHome) {
         this.officeHome = officeHome;
     }
 
@@ -50,7 +50,7 @@ class ManagedOfficeProcessSettings {
 		return runAsArgs;
 	}
 
-    public void setRunAsArgs(String[] runAsArgs) {
+    public void setRunAsArgs(final String[] runAsArgs) {
 		this.runAsArgs = runAsArgs;
 	}
 
@@ -58,7 +58,7 @@ class ManagedOfficeProcessSettings {
         return templateProfileDir;
     }
 
-    public void setTemplateProfileDir(File templateProfileDir) {
+    public void setTemplateProfileDir(final File templateProfileDir) {
         this.templateProfileDir = templateProfileDir;
     }
 
@@ -66,7 +66,7 @@ class ManagedOfficeProcessSettings {
         return workDir;
     }
 
-    public void setWorkDir(File workDir) {
+    public void setWorkDir(final File workDir) {
         this.workDir = workDir;
     }
 
@@ -74,7 +74,7 @@ class ManagedOfficeProcessSettings {
         return processManager;
     }
 
-    public void setProcessManager(ProcessManager processManager) {
+    public void setProcessManager(final ProcessManager processManager) {
         this.processManager = processManager;
     }
 
@@ -82,7 +82,7 @@ class ManagedOfficeProcessSettings {
         return retryTimeout;
     }
 
-    public void setRetryTimeout(long retryTimeout) {
+    public void setRetryTimeout(final long retryTimeout) {
         this.retryTimeout = retryTimeout;
     }
 
@@ -90,8 +90,15 @@ class ManagedOfficeProcessSettings {
         return retryInterval;
     }
 
-    public void setRetryInterval(long retryInterval) {
+    public void setRetryInterval(final long retryInterval) {
         this.retryInterval = retryInterval;
     }
 
+    public boolean isUseGnuStyleLongOptions() {
+        return useGnuStyleLongOptions;
+    }
+
+    public void setUseGnuStyleLongOptions(final boolean useGnuStyleLongOptions) {
+        this.useGnuStyleLongOptions = useGnuStyleLongOptions;
+    }
 }

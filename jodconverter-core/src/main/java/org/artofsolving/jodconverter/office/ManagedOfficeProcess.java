@@ -35,10 +35,9 @@ class ManagedOfficeProcess {
 
 	private final Logger logger = Logger.getLogger(getClass().getName());
 
-	public ManagedOfficeProcess(ManagedOfficeProcessSettings settings) throws OfficeException {
+	public ManagedOfficeProcess(final ManagedOfficeProcessSettings settings) throws OfficeException {
 		this.settings = settings;
-		process = new OfficeProcess(settings.getOfficeHome(), settings.getUnoUrl(), settings.getRunAsArgs(), settings.getTemplateProfileDir(), settings.getWorkDir(), settings
-				.getProcessManager());
+		process = new OfficeProcess(settings.getOfficeHome(), settings.getUnoUrl(), settings.getRunAsArgs(), settings.getTemplateProfileDir(), settings.getWorkDir(), settings.getProcessManager(), settings.isUseGnuStyleLongOptions());
 		connection = new OfficeConnection(settings.getUnoUrl());
 	}
 
@@ -48,7 +47,8 @@ class ManagedOfficeProcess {
 
 	public void startAndWait() throws OfficeException {
 		Future<?> future = executor.submit(new Runnable() {
-			public void run() {
+			@Override
+            public void run() {
 				doStartProcessAndConnect();
 			}
 		});
@@ -61,20 +61,22 @@ class ManagedOfficeProcess {
 
 	public void stopAndWait() throws OfficeException {
 		Future<?> future = executor.submit(new Runnable() {
-			public void run() {
+			@Override
+            public void run() {
 				doStopProcess();
 			}
 		});
 		try {
 			future.get();
 		} catch (Exception exception) {
-			throw new OfficeException("failed to start and connect", exception);
+            throw new OfficeException("failed to stop", exception);
 		}
 	}
 
 	public void restartAndWait() {
 		Future<?> future = executor.submit(new Runnable() {
-			public void run() {
+			@Override
+            public void run() {
 				doStopProcess();
 				doStartProcessAndConnect();
 			}
@@ -88,7 +90,8 @@ class ManagedOfficeProcess {
 
 	public void restartDueToTaskTimeout() {
 		executor.execute(new Runnable() {
-			public void run() {
+			@Override
+            public void run() {
 				doTerminateProcess();
 				// will cause unexpected disconnection and subsequent restart
 			}
@@ -97,7 +100,8 @@ class ManagedOfficeProcess {
 
 	public void restartDueToLostConnection() {
 		executor.execute(new Runnable() {
-			public void run() {
+			@Override
+            public void run() {
 				try {
 					doEnsureProcessExited();
 					doStartProcessAndConnect();
@@ -112,7 +116,8 @@ class ManagedOfficeProcess {
 		try {
 			process.start();
 			new Retryable() {
-				protected void attempt() throws TemporaryException, Exception {
+				@Override
+                protected void attempt() throws TemporaryException, Exception {
 					try {
 						connection.connect();
 					} catch (ConnectException connectException) {
@@ -124,7 +129,7 @@ class ManagedOfficeProcess {
 							// restart and retry later
 							// see http://code.google.com/p/jodconverter/issues/detail?id=84
 							logger.log(Level.WARNING, "office process died with exit code 81; restarting it");
-							process.start(true);
+							process.doStart(true);
 							throw new TemporaryException(connectException);
 						} else {
 							throw new OfficeException("office process died with exit code " + exitCode);
@@ -158,6 +163,7 @@ class ManagedOfficeProcess {
 			doTerminateProcess();
 		}
 		process.deleteProfileDir();
+
 	}
 
 	private void doTerminateProcess() throws OfficeException {

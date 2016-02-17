@@ -26,22 +26,22 @@ public class ExternalOfficeManagerTest {
     public void executeTask() throws Exception {
         UnoUrl unoUrl = UnoUrl.socket(2002);
         OfficeProcess officeProcess = new OfficeProcess(OfficeUtils.getDefaultOfficeHome(), unoUrl,
-            null, null, new File(System.getProperty("java.io.tmpdir")), new PureJavaProcessManager());
+            null, null, new File(System.getProperty("java.io.tmpdir")), new PureJavaProcessManager(), false);
         officeProcess.start();
         Thread.sleep(2000);
         Integer exitCode = officeProcess.getExitCode();
         if (exitCode != null && exitCode.equals(Integer.valueOf(81))) {
-            officeProcess.start(true);
+            officeProcess.doStart(true);
             Thread.sleep(2000);
         }
-        
+
         ExternalOfficeManager manager = new ExternalOfficeManager(unoUrl, true);
         manager.start();
-        
+
         MockOfficeTask task = new MockOfficeTask();
         manager.execute(task);
         assertTrue(task.isCompleted());
-        
+
         manager.stop();
         //TODO replace when OfficeProcess has a forciblyTerminate()
         Process process = (Process) ReflectionUtils.getPrivateField(officeProcess, "process");

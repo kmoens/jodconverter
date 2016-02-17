@@ -10,6 +10,11 @@ If it exceeds 159 characters, OpenOffice fails to start properly.
 work directory unique outside of the library.
 * Remove of the Sigar library, it is unstable in production use.
 
+The following patches where merged from other forks:
+* Added support for OOXML (DOCX) formats. -- merged from Nuxeo
+* Removed support for old StarOffice formats. -- merged from Nuxeo
+* Possibility to use gnu-style options (LibreOffice). -- merged from Nuxeo
+
 JODConverter
 ============
 

@@ -157,7 +157,7 @@ public class DefaultOfficeManagerConfiguration {
         } else if (!officeHome.isDirectory()) {
             throw new IllegalStateException("officeHome doesn't exist or is not a directory: " + officeHome);
         } else if (!OfficeUtils.getOfficeExecutable(officeHome).isFile()) {
-            throw new IllegalStateException("invalid officeHome: it doesn't contain soffice.bin: " + officeHome);
+            throw new IllegalStateException("invalid officeHome: couldn't find " + OfficeUtils.getOfficeExecutable(officeHome));
         }
         if (templateProfileDir != null && !isValidProfileDir(templateProfileDir)) {
             throw new IllegalStateException("templateProfileDir doesn't appear to contain a user profile: " + templateProfileDir);
@@ -175,7 +175,7 @@ public class DefaultOfficeManagerConfiguration {
         for (int i = 0; i < numInstances; i++) {
             unoUrls[i] = (connectionProtocol == OfficeConnectionProtocol.PIPE) ? UnoUrl.pipe(pipeNames[i]) : UnoUrl.socket(portNumbers[i]);
         }
-        return new ProcessPoolOfficeManager(officeHome, unoUrls, runAsArgs, templateProfileDir, workDir, retryTimeout, taskQueueTimeout, taskExecutionTimeout, maxTasksPerProcess, processManager);
+        return new ProcessPoolOfficeManager(officeHome, unoUrls, runAsArgs, templateProfileDir, workDir, retryTimeout, taskQueueTimeout, taskExecutionTimeout, maxTasksPerProcess, processManager, false);
     }
 
     private ProcessManager findBestProcessManager() {
@@ -189,15 +189,6 @@ public class DefaultOfficeManagerConfiguration {
             // NOTE: UnixProcessManager can't be trusted to work on Solaris
             // because of the 80-char limit on ps output there
             return new PureJavaProcessManager();
-        }
-    }
-
-    private boolean isSigarAvailable() {
-        try {
-            Class.forName("org.hyperic.sigar.Sigar", false, getClass().getClassLoader());
-            return true;
-        } catch (ClassNotFoundException classNotFoundException) {
-            return false;
         }
     }
 
@@ -216,5 +207,4 @@ public class DefaultOfficeManagerConfiguration {
     private boolean isValidProfileDir(final File profileDir) {
         return new File(profileDir, "user").isDirectory();
     }
-
 }

@@ -17,6 +17,7 @@ import static org.artofsolving.jodconverter.process.ProcessManager.PID_UNKNOWN;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -24,6 +25,7 @@ import java.util.Map;
 import java.util.logging.Logger;
 
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.IOUtils;
 import org.artofsolving.jodconverter.process.ProcessManager;
 import org.artofsolving.jodconverter.process.ProcessQuery;
 import org.artofsolving.jodconverter.util.PlatformUtils;
@@ -38,13 +40,16 @@ class OfficeProcess {
     private final File instanceProfileDir;
     private final String instanceProfileUrl;
     private final ProcessManager processManager;
+    private OfficeVersionDescriptor versionDescriptor;
 
     private Process process;
     private long pid = PID_UNKNOWN;
+	private String commandArgPrefix;
 
     private final Logger logger = Logger.getLogger(getClass().getName());
 
-    public OfficeProcess(final File officeHome, final UnoUrl unoUrl, final String[] runAsArgs, final File templateProfileDir, final File instanceProfileDir, final ProcessManager processManager) {
+    public OfficeProcess(final File officeHome, final UnoUrl unoUrl, final String[] runAsArgs, final File templateProfileDir, final File instanceProfileDir,
+            final ProcessManager processManager, final boolean useGnuStyleLongOptions) {
         this.officeHome = officeHome;
         this.unoUrl = unoUrl;
         this.runAsArgs = runAsArgs;
@@ -57,13 +62,72 @@ class OfficeProcess {
             logger.severe("The instance profile directory (" + instanceProfileUrl + ") is too long (>= " + MAX_LENGTH + " characters).");
             throw new IllegalStateException("The instance profile directory (" + instanceProfileUrl + ") is too long (>= " + MAX_LENGTH + " characters).");
         }
+
+        if (useGnuStyleLongOptions) {
+            commandArgPrefix = "--";
+        } else {
+            commandArgPrefix = "-";
+        }
+    }
+
+    private OfficeVersionDescriptor determineOfficeVersion() {
+        try {
+            if (versionDescriptor != null) {
+                return versionDescriptor;
+            }
+
+            File executable = OfficeUtils.getOfficeExecutable(officeHome);
+            if (PlatformUtils.isWindows()) {
+                versionDescriptor = OfficeVersionDescriptor.parseFromExecutableLocation(executable.getPath());
+                return versionDescriptor;
+            }
+
+            List<String> command = new ArrayList<String>();
+            command.add(executable.getAbsolutePath());
+            command.add("-help");
+            command.add("-headless");
+            command.add("-nocrashreport");
+            command.add("-nofirststartwizard");
+            command.add("-nolockcheck");
+            command.add("-nologo");
+            command.add("-norestore");
+            command.add("-env:UserInstallation=" + OfficeUtils.toUrl(instanceProfileDir));
+
+            ProcessBuilder processBuilder = new ProcessBuilder(command);
+            processBuilder.redirectErrorStream(true);
+
+            Process checkProcess = processBuilder.start();
+            try {
+                checkProcess.waitFor();
+            } catch (InterruptedException e) {
+                // NOP
+            }
+            String versionCheckOutput = IOUtils.toString(checkProcess.getInputStream());
+
+            versionDescriptor = OfficeVersionDescriptor.parseFromHelpOutput(versionCheckOutput);
+            return versionDescriptor;
+        } catch (IOException e) {
+            logger.severe("Unable to determine Office version: " + e.getMessage());
+            versionDescriptor =  null;
+            return versionDescriptor;
+        }
     }
 
     public void start() throws IOException {
-        start(false);
+        OfficeVersionDescriptor version = determineOfficeVersion();
+
+        if (version != null) {
+            if (version.useGnuStyleLongOptions()) {
+                commandArgPrefix = "--";
+            } else {
+                commandArgPrefix = "-";
+            }
+        }
+        logger.fine("OfficeProcess info:" + version.toString());
+        doStart(false);
     }
 
-    public void start(final boolean restart) throws IOException {
+    public void doStart(final boolean restart) throws IOException {
         ProcessQuery processQuery = new ProcessQuery("soffice.bin", unoUrl.getAcceptString());
         long existingPid = processManager.findPid(processQuery);
     	if (!(existingPid == PID_NOT_FOUND || existingPid == PID_UNKNOWN)) {
@@ -79,27 +143,46 @@ class OfficeProcess {
         	command.addAll(Arrays.asList(runAsArgs));
         }
         command.add(executable.getAbsolutePath());
-        command.add("-accept=" + unoUrl.getAcceptString() + ";urp;");
-        command.add("-env:UserInstallation=" + instanceProfileUrl);
-        command.add("-headless");
-        command.add("-nocrashreport");
-        command.add("-nodefault");
-        command.add("-nofirststartwizard");
-        command.add("-nolockcheck");
-        command.add("-nologo");
-        command.add("-norestore");
+        command.add(commandArgPrefix + "accept=" + unoUrl.getAcceptString() + ";urp;");
+        command.add(commandArgPrefix + "env:UserInstallation=" + instanceProfileUrl);
+        command.add(commandArgPrefix + "headless");
+        command.add(commandArgPrefix + "nocrashreport");
+        command.add(commandArgPrefix + "nodefault");
+        command.add(commandArgPrefix + "nofirststartwizard");
+        command.add(commandArgPrefix + "nolockcheck");
+        command.add(commandArgPrefix + "nologo");
+        command.add(commandArgPrefix + "norestore");
+
         ProcessBuilder processBuilder = new ProcessBuilder(command);
+        processBuilder.redirectErrorStream(true);
+
         if (PlatformUtils.isWindows()) {
             addBasisAndUrePaths(processBuilder);
         }
         logger.info(String.format("starting process with acceptString '%s' and profileDir '%s'", unoUrl, instanceProfileDir));
         process = processBuilder.start();
+
+		manageProcessOutputs(process);
+
         pid = processManager.findPid(processQuery);
         if (pid == PID_NOT_FOUND) {
             throw new IllegalStateException(String.format("process with acceptString '%s' started but its pid could not be found",
                     unoUrl.getAcceptString()));
         }
         logger.info("started process" + (pid != PID_UNKNOWN ? "; pid = " + pid : ""));
+    }
+
+    protected void manageProcessOutputs(final Process process) {
+        InputStream processOut = process.getInputStream();
+        InputStream processError = process.getErrorStream();
+
+        Thread to = new Thread(new OfficeProcessStreamGobbler(processOut), "OfficeProcessStdOutThread");
+        to.setDaemon(true);
+        to.start();
+
+        Thread te = new Thread(new OfficeProcessStreamGobbler(processError), "OfficeProcessStdErrThread");
+        te.setDaemon(true);
+        te.start();
     }
 
     private void prepareInstanceProfileDir() throws OfficeException {
@@ -167,7 +250,6 @@ class OfficeProcess {
     }
 
     private class ExitCodeRetryable extends Retryable {
-
         private int exitCode;
 
         @Override
@@ -211,4 +293,7 @@ class OfficeProcess {
         return getExitCode(retryInterval, retryTimeout);
     }
 
+    public OfficeVersionDescriptor getVersion() {
+        return determineOfficeVersion();
+    }
 }

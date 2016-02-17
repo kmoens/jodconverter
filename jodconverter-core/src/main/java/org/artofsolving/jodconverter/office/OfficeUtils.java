@@ -21,7 +21,6 @@ import com.sun.star.beans.PropertyValue;
 import com.sun.star.uno.UnoRuntime;
 
 public class OfficeUtils {
-
     public static final String SERVICE_DESKTOP = "com.sun.star.frame.Desktop";
 
     private OfficeUtils() {
@@ -60,45 +59,20 @@ public class OfficeUtils {
         return url.endsWith("/") ? url.substring(0, url.length() - 1) : url;
     }
 
+    /**
+     * Search for an (Open/Libre)Office install.
+     * If the System property "office.home" is defined, it takes precedence.
+     *
+     * @see PlatformUtils#findOfficeHome()
+     *
+     * @return Office home found
+     */
     public static File getDefaultOfficeHome() {
-        if (System.getProperty("office.home") != null) {
-            return new File(System.getProperty("office.home"));
+        String officeHome = System.getProperty("office.home");
+        if (officeHome == null) {
+            officeHome = PlatformUtils.findOfficeHome();
         }
-        if (PlatformUtils.isWindows()) {
-            // %ProgramFiles(x86)% on 64-bit machines; %ProgramFiles% on 32-bit ones
-            String programFiles = System.getenv("ProgramFiles(x86)");
-            if (programFiles == null) {
-                programFiles = System.getenv("ProgramFiles");
-            }
-            return findOfficeHome(
-                programFiles + File.separator + "OpenOffice 4",
-                programFiles + File.separator + "OpenOffice.org 3",
-                programFiles + File.separator + "LibreOffice 3"
-            );
-        } else if (PlatformUtils.isMac()) {
-            return findOfficeHome(
-                "/Applications/OpenOffice.org.app/Contents",
-                "/Applications/LibreOffice.app/Contents"
-            );
-        } else {
-            // Linux or other *nix variants
-            return findOfficeHome(
-                "/opt/openoffice.org3",
-                "/opt/libreoffice",
-                "/usr/lib/openoffice",
-                "/usr/lib/libreoffice"
-            );
-        }
-    }
-
-    private static File findOfficeHome(final String... knownPaths) {
-        for (String path : knownPaths) {
-            File home = new File(path);
-            if (getOfficeExecutable(home).isFile()) {
-                return home;
-            }
-        }
-        return null;
+        return new File(officeHome);
     }
 
     public static File getOfficeExecutable(final File officeHome) {

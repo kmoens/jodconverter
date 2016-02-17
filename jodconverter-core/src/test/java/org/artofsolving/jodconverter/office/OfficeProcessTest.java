@@ -21,7 +21,7 @@ public class OfficeProcessTest {
     @Test
     public void testInstanceProfileDir() {
         // when
-        OfficeProcess op = new OfficeProcess(new File("/foo"), UnoUrl.socket(1234), new String[0], new File("/templates"), new File(PATH_BORDER), new PureJavaProcessManager());
+        OfficeProcess op = new OfficeProcess(new File("/foo"), UnoUrl.socket(1234), new String[0], new File("/templates"), new File(PATH_BORDER), new PureJavaProcessManager(), false);
 
         // then
         assertThat(Whitebox.getInternalState(op, "instanceProfileDir")).isInstanceOf(File.class);
@@ -38,7 +38,7 @@ public class OfficeProcessTest {
         PlatformUtils.set("windows");
 
         // when
-        OfficeProcess op = new OfficeProcess(new File("/foo"), UnoUrl.socket(1234), new String[0], new File("/templates"), new File(PATH_TOO_LONG), new PureJavaProcessManager());
+        OfficeProcess op = new OfficeProcess(new File("/foo"), UnoUrl.socket(1234), new String[0], new File("/templates"), new File(PATH_TOO_LONG), new PureJavaProcessManager(), false);
     }
 
     @Test
@@ -47,7 +47,7 @@ public class OfficeProcessTest {
         PlatformUtils.set("linux");
 
         // when
-        OfficeProcess op = new OfficeProcess(new File("/foo"), UnoUrl.socket(1234), new String[0], new File("/templates"), new File(PATH_TOO_LONG), new PureJavaProcessManager());
+        OfficeProcess op = new OfficeProcess(new File("/foo"), UnoUrl.socket(1234), new String[0], new File("/templates"), new File(PATH_TOO_LONG), new PureJavaProcessManager(), false);
 
         // then
         assertThat(Whitebox.getInternalState(op, "instanceProfileDir")).isInstanceOf(File.class);

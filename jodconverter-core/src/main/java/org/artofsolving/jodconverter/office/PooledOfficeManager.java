@@ -32,11 +32,13 @@ class PooledOfficeManager implements OfficeManager {
     private final Logger logger = Logger.getLogger(getClass().getName());
 
     private OfficeConnectionEventListener connectionEventListener = new OfficeConnectionEventListener() {
-        public void connected(OfficeConnectionEvent event) {
+        @Override
+        public void connected(final OfficeConnectionEvent event) {
             taskCount = 0;
             taskExecutor.setAvailable(true);
         }
-        public void disconnected(OfficeConnectionEvent event) {
+        @Override
+        public void disconnected(final OfficeConnectionEvent event) {
             taskExecutor.setAvailable(false);
             if (stopping) {
                 // expected
@@ -51,19 +53,21 @@ class PooledOfficeManager implements OfficeManager {
         }
     };
 
-    public PooledOfficeManager(UnoUrl unoUrl) {
+    public PooledOfficeManager(final UnoUrl unoUrl) {
         this(new PooledOfficeManagerSettings(unoUrl));
     }
 
-    public PooledOfficeManager(PooledOfficeManagerSettings settings) {
+    public PooledOfficeManager(final PooledOfficeManagerSettings settings) {
         this.settings = settings;
         managedOfficeProcess = new ManagedOfficeProcess(settings);
         managedOfficeProcess.getConnection().addConnectionEventListener(connectionEventListener);
         taskExecutor = new SuspendableThreadPoolExecutor(new NamedThreadFactory("OfficeTaskThread"));
     }
 
+    @Override
     public void execute(final OfficeTask task) throws OfficeException {
         Future<?> futureTask = taskExecutor.submit(new Runnable() {
+            @Override
             public void run() {
                 if (settings.getMaxTasksPerProcess() > 0 && ++taskCount == settings.getMaxTasksPerProcess() + 1) {
                     logger.info(String.format("reached limit of %d maxTasksPerProcess: restarting", settings.getMaxTasksPerProcess()));
@@ -92,10 +96,12 @@ class PooledOfficeManager implements OfficeManager {
          }
     }
 
+    @Override
     public void start() throws OfficeException {
         managedOfficeProcess.startAndWait();
     }
 
+    @Override
     public void stop() throws OfficeException {
         taskExecutor.setAvailable(false);
         stopping = true;
@@ -103,8 +109,8 @@ class PooledOfficeManager implements OfficeManager {
         managedOfficeProcess.stopAndWait();
     }
 
-	public boolean isRunning() {
+	@Override
+    public boolean isRunning() {
 		return managedOfficeProcess.isConnected();
 	}
-
 }
