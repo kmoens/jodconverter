@@ -12,6 +12,7 @@
 //
 package org.artofsolving.jodconverter.office;
 
+import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertTrue;
 
 import java.io.File;
@@ -46,6 +47,14 @@ public class ExternalOfficeManagerTest {
         //TODO replace when OfficeProcess has a forciblyTerminate()
         Process process = (Process) ReflectionUtils.getPrivateField(officeProcess, "process");
         process.destroy();
+    }
+
+    public void testVersion() {
+        UnoUrl unoUrl = UnoUrl.socket(2002);
+        ExternalOfficeManager manager = new ExternalOfficeManager(unoUrl, true);
+
+        assertEquals(manager.getVersion().getProductName(), "???");
+        assertEquals(manager.getVersion().getVersion(), "???");
     }
 
     //TODO test auto-reconnection

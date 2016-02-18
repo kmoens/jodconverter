@@ -27,4 +27,12 @@ public interface OfficeManager {
     void stop() throws OfficeException;
 
     boolean isRunning();
+
+    /**
+     * @return
+     *    The version of the OpenOffice/LibreOffice product which is being used.
+     *
+     * @since 3.01.2.00
+     */
+    OfficeVersion getVersion();
 }

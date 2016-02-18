@@ -24,7 +24,6 @@ import java.util.List;
 import java.util.Map;
 
 import org.apache.commons.io.FileUtils;
-import org.apache.commons.io.IOUtils;
 import org.artofsolving.jodconverter.process.ProcessManager;
 import org.artofsolving.jodconverter.process.ProcessQuery;
 import org.artofsolving.jodconverter.util.PlatformUtils;
@@ -41,7 +40,7 @@ class OfficeProcess {
     private final File instanceProfileDir;
     private final String instanceProfileUrl;
     private final ProcessManager processManager;
-    private OfficeVersionDescriptor versionDescriptor;
+    private OfficeVersion versionDescriptor;
 
     private Process process;
     private long pid = PID_UNKNOWN;
@@ -71,51 +70,9 @@ class OfficeProcess {
         }
     }
 
-    private OfficeVersionDescriptor determineOfficeVersion() {
-        try {
-            if (versionDescriptor != null) {
-                return versionDescriptor;
-            }
-
-            File executable = OfficeUtils.getOfficeExecutable(officeHome);
-            if (PlatformUtils.isWindows()) {
-                versionDescriptor = OfficeVersionDescriptor.parseFromExecutableLocation(executable.getPath());
-                return versionDescriptor;
-            }
-
-            List<String> command = new ArrayList<String>();
-            command.add(executable.getAbsolutePath());
-            command.add("-help");
-            command.add("-headless");
-            command.add("-nocrashreport");
-            command.add("-nofirststartwizard");
-            command.add("-nolockcheck");
-            command.add("-nologo");
-            command.add("-norestore");
-            command.add("-env:UserInstallation=" + OfficeUtils.toUrl(instanceProfileDir));
-
-            ProcessBuilder processBuilder = new ProcessBuilder(command);
-            processBuilder.redirectErrorStream(true);
-
-            Process checkProcess = processBuilder.start();
-            try {
-                checkProcess.waitFor();
-            } catch (InterruptedException e) {
-                // NOP
-            }
-            String versionCheckOutput = IOUtils.toString(checkProcess.getInputStream());
-
-            versionDescriptor = OfficeVersionDescriptor.parseFromHelpOutput(versionCheckOutput);
-            return versionDescriptor;
-        } catch (IOException e) {
-            logger.error("Unable to determine Office version: " + e.getMessage());
-            versionDescriptor =  null;
-            return versionDescriptor;
-        }
-    }
-
     public void start() throws IOException {
-        OfficeVersionDescriptor version = determineOfficeVersion();
+        OfficeVersionDetector detector = new OfficeVersionDetector(officeHome);
+        OfficeVersion version = detector.getVersion();
 
         if (version != null) {
             if (version.useGnuStyleLongOptions()) {
@@ -124,7 +81,7 @@ class OfficeProcess {
                 commandArgPrefix = "-";
             }
         }
-        logger.info("Office Information:" + version.toString());
+        logger.info("Office: " + version.toString());
         doStart(false);
     }
 
@@ -292,9 +249,5 @@ class OfficeProcess {
         logger.info(String.format("trying to forcibly terminate process: '" + unoUrl + "'" + (pid != PID_UNKNOWN ? " (pid " + pid  + ")" : "")));
         processManager.kill(process, pid);
         return getExitCode(retryInterval, retryTimeout);
-    }
-
-    public OfficeVersionDescriptor getVersion() {
-        return determineOfficeVersion();
     }
 }

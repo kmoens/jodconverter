@@ -18,7 +18,7 @@ import java.net.ConnectException;
  * {@link OfficeManager} implementation that connects to an external Office process.
  * <p>
  * The external Office process needs to be started manually, e.g. from the command line with
- * 
+ *
  * <pre>
  * soffice -accept="socket,host=127.0.0.1,port=2002;urp;"
  * </pre>
@@ -31,8 +31,8 @@ import java.net.ConnectException;
  * operations.
  */
 class ExternalOfficeManager implements OfficeManager {
-
 	private final OfficeConnection connection;
+	private final OfficeVersion officeVersion;
 	private final boolean connectOnStart;
 
 	/**
@@ -41,12 +41,14 @@ class ExternalOfficeManager implements OfficeManager {
 	 *            should a connection be attempted on {@link #start()}? Default is <em>true</em>. If <em>false</em>, a connection will only be attempted the first time an
 	 *            {@link OfficeTask} is executed.
 	 */
-	public ExternalOfficeManager(UnoUrl unoUrl, boolean connectOnStart) {
+	public ExternalOfficeManager(final UnoUrl unoUrl, final boolean connectOnStart) {
 		connection = new OfficeConnection(unoUrl);
+		officeVersion = new OfficeVersion();
 		this.connectOnStart = connectOnStart;
 	}
 
-	public void start() throws OfficeException {
+	@Override
+    public void start() throws OfficeException {
 		if (connectOnStart) {
 			synchronized (connection) {
 				connect();
@@ -54,7 +56,8 @@ class ExternalOfficeManager implements OfficeManager {
 		}
 	}
 
-	public void stop() {
+	@Override
+    public void stop() {
 		synchronized (connection) {
 			if (connection.isConnected()) {
 				connection.disconnect();
@@ -62,7 +65,8 @@ class ExternalOfficeManager implements OfficeManager {
 		}
 	}
 
-	public void execute(OfficeTask task) throws OfficeException {
+	@Override
+    public void execute(final OfficeTask task) throws OfficeException {
 		synchronized (connection) {
 			if (!connection.isConnected()) {
 				connect();
@@ -79,8 +83,13 @@ class ExternalOfficeManager implements OfficeManager {
 		}
 	}
 
-	public boolean isRunning() {
+	@Override
+    public boolean isRunning() {
 		return connection.isConnected();
 	}
 
+    @Override
+    public OfficeVersion getVersion() {
+        return officeVersion;
+    }
 }

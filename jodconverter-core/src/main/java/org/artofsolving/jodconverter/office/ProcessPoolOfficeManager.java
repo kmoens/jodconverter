@@ -16,24 +16,24 @@ import java.io.File;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.TimeUnit;
+
+import org.artofsolving.jodconverter.process.ProcessManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import org.artofsolving.jodconverter.process.ProcessManager;
-
 class ProcessPoolOfficeManager implements OfficeManager {
-
     private final BlockingQueue<PooledOfficeManager> pool;
     private final PooledOfficeManager[] pooledManagers;
+    private final OfficeVersion officeVersion;
     private final long taskQueueTimeout;
 
     private volatile boolean running = false;
 
     private final Logger logger = LoggerFactory.getLogger(ProcessPoolOfficeManager.class.getName());
 
-    public ProcessPoolOfficeManager(File officeHome, UnoUrl[] unoUrls, String[] runAsArgs, File templateProfileDir, File workDir,
-            long retryTimeout, long taskQueueTimeout, long taskExecutionTimeout, int maxTasksPerProcess,
-            ProcessManager processManager, boolean useGnuStyleLongOptions) {
+    public ProcessPoolOfficeManager(final File officeHome, final UnoUrl[] unoUrls, final String[] runAsArgs, final File templateProfileDir, final File workDir,
+            final long retryTimeout, final long taskQueueTimeout, final long taskExecutionTimeout, final int maxTasksPerProcess,
+            final ProcessManager processManager, final boolean useGnuStyleLongOptions) {
 		this.taskQueueTimeout = taskQueueTimeout;
         pool = new ArrayBlockingQueue<PooledOfficeManager>(unoUrls.length);
         pooledManagers = new PooledOfficeManager[unoUrls.length];
@@ -50,18 +50,23 @@ class ProcessPoolOfficeManager implements OfficeManager {
             settings.setUseGnuStyleLongOptions(useGnuStyleLongOptions);
             pooledManagers[i] = new PooledOfficeManager(settings);
         }
+
+        OfficeVersionDetector versionDetector = new OfficeVersionDetector(officeHome);
+        officeVersion = versionDetector.getVersion();
         logger.info("ProcessManager implementation is " + processManager.getClass().getSimpleName());
     }
 
+    @Override
     public synchronized void start() throws OfficeException {
-        for (int i = 0; i < pooledManagers.length; i++) {
-            pooledManagers[i].start();
-            releaseManager(pooledManagers[i]);
+        for (PooledOfficeManager pooledManager : pooledManagers) {
+            pooledManager.start();
+            releaseManager(pooledManager);
         }
         running = true;
     }
 
-    public void execute(OfficeTask task) throws IllegalStateException, OfficeException {
+    @Override
+    public void execute(final OfficeTask task) throws IllegalStateException, OfficeException {
         if (!running) {
             throw new IllegalStateException("this OfficeManager is currently stopped");
         }
@@ -79,12 +84,13 @@ class ProcessPoolOfficeManager implements OfficeManager {
         }
     }
 
+    @Override
     public synchronized void stop() throws OfficeException {
         running = false;
         logger.info("stopping");
         pool.clear();
-        for (int i = 0; i < pooledManagers.length; i++) {
-            pooledManagers[i].stop();
+        for (PooledOfficeManager pooledManager : pooledManagers) {
+            pooledManager.stop();
         }
         logger.info("stopped");
     }
@@ -97,7 +103,7 @@ class ProcessPoolOfficeManager implements OfficeManager {
         }
     }
 
-    private void releaseManager(PooledOfficeManager manager) {
+    private void releaseManager(final PooledOfficeManager manager) {
         try {
             pool.put(manager);
         } catch (InterruptedException interruptedException) {
@@ -105,8 +111,13 @@ class ProcessPoolOfficeManager implements OfficeManager {
         }
     }
 
-	public boolean isRunning() {
+	@Override
+    public boolean isRunning() {
 		return running;
 	}
 
+    @Override
+    public OfficeVersion getVersion() {
+        return officeVersion;
+    }
 }

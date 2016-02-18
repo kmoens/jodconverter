@@ -17,6 +17,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -114,4 +115,9 @@ class PooledOfficeManager implements OfficeManager {
     public boolean isRunning() {
 		return managedOfficeProcess.isConnected();
 	}
+
+    @Override
+    public OfficeVersion getVersion() {
+        throw new UnsupportedOperationException("Internal Class - Version Query not supported");
+    }
 }
