@@ -17,7 +17,8 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
-import java.util.logging.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 class PooledOfficeManager implements OfficeManager {
 
@@ -29,7 +30,7 @@ class PooledOfficeManager implements OfficeManager {
     private int taskCount;
     private Future<?> currentTask;
 
-    private final Logger logger = Logger.getLogger(getClass().getName());
+    private final Logger logger = LoggerFactory.getLogger(getClass().getName());
 
     private OfficeConnectionEventListener connectionEventListener = new OfficeConnectionEventListener() {
         @Override
@@ -44,7 +45,7 @@ class PooledOfficeManager implements OfficeManager {
                 // expected
                 stopping = false;
             } else {
-                logger.warning("connection lost unexpectedly; attempting restart");
+                logger.warn("connection lost unexpectedly; attempting restart");
                 if (currentTask != null) {
                     currentTask.cancel(true);
                 }

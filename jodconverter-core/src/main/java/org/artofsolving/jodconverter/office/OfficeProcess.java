@@ -22,13 +22,14 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
-import java.util.logging.Logger;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.artofsolving.jodconverter.process.ProcessManager;
 import org.artofsolving.jodconverter.process.ProcessQuery;
 import org.artofsolving.jodconverter.util.PlatformUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 class OfficeProcess {
     private static final int MAX_LENGTH = 159;
@@ -46,7 +47,7 @@ class OfficeProcess {
     private long pid = PID_UNKNOWN;
 	private String commandArgPrefix;
 
-    private final Logger logger = Logger.getLogger(getClass().getName());
+    private final Logger logger = LoggerFactory.getLogger(getClass().getName());
 
     public OfficeProcess(final File officeHome, final UnoUrl unoUrl, final String[] runAsArgs, final File templateProfileDir, final File instanceProfileDir,
             final ProcessManager processManager, final boolean useGnuStyleLongOptions) {
@@ -59,7 +60,7 @@ class OfficeProcess {
 
         instanceProfileUrl = OfficeUtils.toUrl(instanceProfileDir);
         if (PlatformUtils.isWindows() && instanceProfileUrl.length() >= MAX_LENGTH) {
-            logger.severe("The instance profile directory (" + instanceProfileUrl + ") is too long (>= " + MAX_LENGTH + " characters).");
+            logger.error("The instance profile directory (" + instanceProfileUrl + ") is too long (>= " + MAX_LENGTH + " characters).");
             throw new IllegalStateException("The instance profile directory (" + instanceProfileUrl + ") is too long (>= " + MAX_LENGTH + " characters).");
         }
 
@@ -107,7 +108,7 @@ class OfficeProcess {
             versionDescriptor = OfficeVersionDescriptor.parseFromHelpOutput(versionCheckOutput);
             return versionDescriptor;
         } catch (IOException e) {
-            logger.severe("Unable to determine Office version: " + e.getMessage());
+            logger.error("Unable to determine Office version: " + e.getMessage());
             versionDescriptor =  null;
             return versionDescriptor;
         }
@@ -123,7 +124,7 @@ class OfficeProcess {
                 commandArgPrefix = "-";
             }
         }
-        logger.fine("OfficeProcess info:" + version.toString());
+        logger.info("Office Information:" + version.toString());
         doStart(false);
     }
 
@@ -187,7 +188,7 @@ class OfficeProcess {
 
     private void prepareInstanceProfileDir() throws OfficeException {
         if (instanceProfileDir.exists()) {
-            logger.warning(String.format("profile dir '%s' already exists; deleting", instanceProfileDir));
+            logger.warn(String.format("profile dir '%s' already exists; deleting", instanceProfileDir));
             deleteProfileDir();
         }
         if (templateProfileDir != null) {
@@ -206,9 +207,9 @@ class OfficeProcess {
             } catch (IOException ioException) {
                 File oldProfileDir = new File(instanceProfileDir.getParentFile(), instanceProfileDir.getName() + ".old." + System.currentTimeMillis());
                 if (instanceProfileDir.renameTo(oldProfileDir)) {
-                    logger.warning("could not delete profileDir: " + ioException.getMessage() + "; renamed it to " + oldProfileDir);
+                    logger.warn("could not delete profileDir: " + ioException.getMessage() + "; renamed it to " + oldProfileDir);
                 } else {
-                    logger.severe("could not delete profileDir: " + ioException.getMessage());
+                    logger.error("could not delete profileDir: " + ioException.getMessage());
                 }
             }
         }
@@ -218,7 +219,7 @@ class OfficeProcess {
         // see http://wiki.services.openoffice.org/wiki/ODF_Toolkit/Efforts/Three-Layer_OOo
         File basisLink = new File(officeHome, "basis-link");
         if (!basisLink.isFile()) {
-            logger.fine("no %OFFICE_HOME%/basis-link found; assuming it's OOo 2.x and we don't need to append URE and Basic paths");
+            logger.debug("no %OFFICE_HOME%/basis-link found; assuming it's OOo 2.x and we don't need to append URE and Basic paths");
             return;
         }
         String basisLinkText = FileUtils.readFileToString(basisLink).trim();
@@ -238,7 +239,7 @@ class OfficeProcess {
             }
         }
         String path = environment.get(pathKey) + ";" + ureBin.getAbsolutePath() + ";" + basisProgram.getAbsolutePath();
-        logger.fine(String.format("setting %s to \"%s\"", pathKey, path));
+        logger.debug(String.format("setting %s to \"%s\"", pathKey, path));
         environment.put(pathKey, path);
     }
 

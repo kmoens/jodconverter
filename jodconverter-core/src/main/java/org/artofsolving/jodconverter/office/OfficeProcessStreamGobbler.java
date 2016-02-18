@@ -16,10 +16,11 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.util.logging.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 class OfficeProcessStreamGobbler implements Runnable {
-    private final Logger logger = Logger.getLogger(getClass().getName());
+    private final Logger logger = LoggerFactory.getLogger(getClass().getName());
     private final InputStream is;
 
     OfficeProcessStreamGobbler(final InputStream is) {
@@ -32,10 +33,10 @@ class OfficeProcessStreamGobbler implements Runnable {
         String line;
         try {
             while ((line = br.readLine()) != null) {
-                logger.warning("StreamGobbler: " + line);
+                logger.warn("StreamGobbler: " + line);
             }
         } catch (IOException e) {
-            logger.warning(e.getMessage());
+            logger.warn(e.getMessage());
         }
     }
 }

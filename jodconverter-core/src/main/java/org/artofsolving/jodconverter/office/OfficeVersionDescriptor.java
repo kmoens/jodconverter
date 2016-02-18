@@ -12,10 +12,11 @@
 //
 package org.artofsolving.jodconverter.office;
 
-import java.util.logging.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class OfficeVersionDescriptor {
-    private final Logger logger = Logger.getLogger(getClass().getName());
+    private final Logger logger = LoggerFactory.getLogger(getClass().getName());
 
     private String productName;
     private String version;
@@ -72,7 +73,7 @@ public class OfficeVersionDescriptor {
             desc.useGnuStyleLongOptions = true;
         }
 
-        String[] versionsToCheck = { "3.9", "3.8", "3.7", "3.6", "3.5", "3.4", "3.3", "3.2", "3.1", "3" };
+        String[] versionsToCheck = { "5.1", "5", "4.1.2", "4.1.1", "4.1", "4", "3.9", "3.8", "3.7", "3.6", "3.5", "3.4", "3.3", "3.2", "3.1", "3" };
 
         for (String v : versionsToCheck) {
             if (path.contains(v)) {

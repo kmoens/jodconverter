@@ -16,7 +16,9 @@ import java.net.ConnectException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.logging.Logger;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.sun.star.beans.XPropertySet;
 import com.sun.star.bridge.XBridge;
@@ -46,7 +48,8 @@ class OfficeConnection implements OfficeContext {
     private volatile boolean connected = false;
 
     private XEventListener bridgeListener = new XEventListener() {
-        public void disposing(EventObject event) {
+        @Override
+        public void disposing(final EventObject event) {
             if (connected) {
                 connected = false;
                 logger.info(String.format("disconnected: '%s'", unoUrl));
@@ -59,18 +62,18 @@ class OfficeConnection implements OfficeContext {
         }
     };
 
-    private final Logger logger = Logger.getLogger(getClass().getName());
+    private final Logger logger = LoggerFactory.getLogger(getClass().getName());
 
-    public OfficeConnection(UnoUrl unoUrl) {
+    public OfficeConnection(final UnoUrl unoUrl) {
         this.unoUrl = unoUrl;
     }
 
-    public void addConnectionEventListener(OfficeConnectionEventListener connectionEventListener) {
+    public void addConnectionEventListener(final OfficeConnectionEventListener connectionEventListener) {
         connectionEventListeners.add(connectionEventListener);
     }
 
     public void connect() throws ConnectException {
-        logger.fine(String.format("connecting with connectString '%s'", unoUrl));
+        logger.debug(String.format("connecting with connectString '%s'", unoUrl));
         try {
             XComponentContext localContext = Bootstrap.createInitialComponentContext(null);
             XMultiComponentFactory localServiceManager = localContext.getServiceManager();
@@ -102,11 +105,12 @@ class OfficeConnection implements OfficeContext {
     }
 
     public synchronized void disconnect() {
-        logger.fine(String.format("disconnecting: '%s'", unoUrl));
+        logger.debug(String.format("disconnecting: '%s'", unoUrl));
         bridgeComponent.dispose();
     }
 
-    public Object getService(String serviceName) {
+    @Override
+    public Object getService(final String serviceName) {
         try {
             return serviceManager.createInstanceWithContext(serviceName, componentContext);
         } catch (Exception exception) {
